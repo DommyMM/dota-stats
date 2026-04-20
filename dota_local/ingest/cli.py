@@ -1,3 +1,4 @@
+import asyncio
 from typing import Annotated
 
 import typer
@@ -14,8 +15,18 @@ def seed(
         typer.Option("--account-id", help="Tracked account_id; repeat flag. Defaults to .env."),
     ] = None,
 ) -> None:
-    """Full historical backfill for each tracked account. (M1)"""
-    raise NotImplementedError("seed lands in M1")
+    """Full historical backfill for each tracked account."""
+    from dota_local.config import get_settings
+    from dota_local.ingest.seed import seed as _seed
+
+    accounts = account_id or get_settings().tracked_account_ids
+    if not accounts:
+        console.print(
+            "[red]no accounts provided.[/red] "
+            "Pass --account-id ... or set TRACKED_ACCOUNT_IDS in .env."
+        )
+        raise typer.Exit(code=1)
+    asyncio.run(_seed(accounts))
 
 
 @app.command("enrich")

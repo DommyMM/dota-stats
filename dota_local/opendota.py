@@ -78,6 +78,34 @@ class OpenDotaClient:
     async def get_player(self, account_id: int) -> dict[str, Any] | None:
         return await self.get(f"/players/{account_id}")
 
+    async def get_match(self, match_id: int) -> dict[str, Any] | None:
+        """Full match detail. Returns None if OpenDota 404s the match
+        (private lobby, or dropped from their parsed index)."""
+        return await self.get(f"/matches/{match_id}")
+
+    @retry(
+        wait=wait_exponential(multiplier=1, min=2, max=30),
+        stop=stop_after_attempt(3),
+        retry=retry_if_exception_type((httpx.TransportError, httpx.HTTPStatusError)),
+        reraise=True,
+    )
+    async def request_parse(self, match_id: int) -> dict[str, Any] | None:
+        """POST /request/{id} — ask OpenDota to parse a replay.
+
+        Only works while Valve still hosts the replay (~8 days). Returns
+        the job dict on success; None on 4xx from the API side (eg. the
+        match is private or Valve already purged the replay).
+        """
+        await self._throttle()
+        try:
+            r = await self._client.post(f"/request/{match_id}")
+        except httpx.HTTPError:
+            raise
+        if r.status_code in (400, 404):
+            return None
+        r.raise_for_status()
+        return r.json()
+
     async def iter_player_matches(
         self,
         account_id: int,

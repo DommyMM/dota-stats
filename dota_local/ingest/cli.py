@@ -31,11 +31,30 @@ def seed(
 
 @app.command("enrich")
 def enrich(
-    since: Annotated[str | None, typer.Option(help="ISO date lower bound.")] = None,
-    limit: Annotated[int | None, typer.Option(help="Max matches to enrich this run.")] = None,
+    limit: Annotated[
+        int | None, typer.Option(help="Max matches to enrich this run.")
+    ] = None,
+    recent_only: Annotated[
+        bool,
+        typer.Option(
+            "--recent-only",
+            help="Skip matches older than Valve's replay retention window.",
+        ),
+    ] = False,
+    include_parsed: Annotated[
+        bool,
+        typer.Option(
+            "--include-parsed",
+            help="Re-enrich matches already marked 'parsed' (for schema backfills).",
+        ),
+    ] = False,
 ) -> None:
-    """Fetch parsed detail + Stratz fields for matches that need it. (M2/M5)"""
-    raise NotImplementedError("enrich lands in M2")
+    """Fetch parsed detail + fan out into match_* child tables."""
+    from dota_local.ingest.enrich import enrich as _enrich
+
+    asyncio.run(
+        _enrich(limit=limit, recent_only=recent_only, include_parsed=include_parsed)
+    )
 
 
 @app.command("refresh")

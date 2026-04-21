@@ -28,7 +28,7 @@ class OpenDotaClient:
     def __init__(
         self,
         api_key: str | None = None,
-        requests_per_minute: int = 60,
+        requests_per_minute: int = 50,
         timeout_s: float = 60.0,
     ) -> None:
         self._api_key = api_key or None
@@ -58,8 +58,8 @@ class OpenDotaClient:
             self._last_at = time.monotonic()
 
     @retry(
-        wait=wait_exponential(multiplier=1, min=2, max=60),
-        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1, min=5, max=120),
+        stop=stop_after_attempt(6),
         retry=retry_if_exception_type((httpx.TransportError, httpx.HTTPStatusError)),
         reraise=True,
     )
@@ -69,9 +69,18 @@ class OpenDotaClient:
         if self._api_key:
             q["api_key"] = self._api_key
         r = await self._client.get(path, params=q)
-        # 404 for a valid but private profile is expected; don't retry.
+        # 404 = private/purged match or missing player. Don't retry.
         if r.status_code == 404:
             return None
+        # OpenDota's rate window is ~1 minute; honor Retry-After when set
+        # and sleep in-place before raising, so the throttle's next slot
+        # lines up with the server's reset rather than piling onto it.
+        if r.status_code == 429:
+            try:
+                delay = float(r.headers.get("Retry-After", "60"))
+            except ValueError:
+                delay = 60.0
+            await asyncio.sleep(min(max(delay, 5.0), 120.0))
         r.raise_for_status()
         return r.json()
 

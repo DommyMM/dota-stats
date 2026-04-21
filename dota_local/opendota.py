@@ -97,8 +97,11 @@ class OpenDotaClient:
             batch = await self.get(f"/players/{account_id}/matches", params=params)
             if not batch:
                 return
-            yield batch
             batch_min = min(m["match_id"] for m in batch)
+            # Terminate before re-yielding: OpenDota sometimes returns the
+            # same full window when less_than_match_id lands on the account's
+            # oldest match_id, so guard against duplicate work.
             if cursor is not None and batch_min >= cursor:
                 return
+            yield batch
             cursor = batch_min

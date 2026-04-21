@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from dota_local.api.filters import (
     MatchFilter,
@@ -169,3 +169,109 @@ def match_summary(
         cols = [d[0] for d in cursor.description]
         row = cursor.fetchone()
     return dict(zip(cols, row)) if row else {}
+
+
+@router.get("/matches/{match_id}")
+def match_detail(match_id: int) -> dict[str, Any]:
+    """Full parsed detail for a single match: the 10 players with
+    per-slot stats + facet + items, draft order, ability-upgrade log,
+    objective log, chat, and teamfight spans.
+
+    Kill-by-hero breakdowns are not stored — OpenDota's parsed match
+    surfaces `kills_log` and `targets` per player, but we don't persist
+    it yet. The UI should fall back to per-player kill totals from
+    `players[*].kills`.
+    """
+    with connection(read_only=True) as conn:
+        match_row = conn.execute(
+            "SELECT match_id, start_time, duration, game_mode, lobby_type, patch, "
+            "region, radiant_win, avg_rank_tier, parse_status, source, replay_url "
+            "FROM matches WHERE match_id = ?",
+            [match_id],
+        ).fetchone()
+        if match_row is None:
+            raise HTTPException(status_code=404, detail="match not found")
+        match_cols = [
+            "match_id", "start_time", "duration", "game_mode", "lobby_type", "patch",
+            "region", "radiant_win", "avg_rank_tier", "parse_status", "source", "replay_url",
+        ]
+        match = dict(zip(match_cols, match_row))
+
+        players = _rows(
+            conn,
+            "SELECT player_slot, account_id, hero_id, is_radiant, kills, deaths, assists, "
+            "gpm, xpm, last_hits, denies, hero_damage, tower_damage, hero_healing, "
+            "net_worth, level, lane, lane_role, position, facet_id, party_id, "
+            "party_size, leaver_status, rank_tier, imp "
+            "FROM match_players WHERE match_id = ? ORDER BY player_slot",
+            [match_id],
+        )
+        # Attach the final inventory to each player so the UI doesn't
+        # need a follow-up round-trip per player_slot.
+        item_rows = _rows(
+            conn,
+            "SELECT player_slot, slot_idx, item_id, ts_purchased "
+            "FROM match_player_items WHERE match_id = ? ORDER BY player_slot, slot_idx",
+            [match_id],
+        )
+        items_by_slot: dict[int, list[dict[str, Any]]] = {}
+        for r in item_rows:
+            items_by_slot.setdefault(r["player_slot"], []).append(
+                {"slot_idx": r["slot_idx"], "item_id": r["item_id"], "ts_purchased": r["ts_purchased"]}
+            )
+        for p in players:
+            p["items"] = items_by_slot.get(p["player_slot"], [])
+
+        ability_rows = _rows(
+            conn,
+            "SELECT player_slot, ability_id, level, time "
+            "FROM match_player_abilities WHERE match_id = ? ORDER BY player_slot, level",
+            [match_id],
+        )
+        abilities_by_slot: dict[int, list[dict[str, Any]]] = {}
+        for r in ability_rows:
+            abilities_by_slot.setdefault(r["player_slot"], []).append(
+                {"ability_id": r["ability_id"], "level": r["level"], "time": r["time"]}
+            )
+        for p in players:
+            p["ability_upgrades"] = abilities_by_slot.get(p["player_slot"], [])
+
+        draft = _rows(
+            conn,
+            "SELECT order_idx, is_pick, is_radiant, hero_id, player_slot "
+            "FROM match_draft WHERE match_id = ? ORDER BY order_idx",
+            [match_id],
+        )
+        objectives = _rows(
+            conn,
+            "SELECT time, type, value, slot FROM match_objectives "
+            "WHERE match_id = ? ORDER BY time",
+            [match_id],
+        )
+        chat = _rows(
+            conn,
+            "SELECT time, slot, type, text FROM match_chat "
+            "WHERE match_id = ? ORDER BY time",
+            [match_id],
+        )
+        teamfights = _rows(
+            conn,
+            "SELECT start_ts, end_ts, deaths FROM match_teamfights "
+            "WHERE match_id = ? ORDER BY start_ts",
+            [match_id],
+        )
+
+    return {
+        "match": match,
+        "players": players,
+        "draft": draft,
+        "objectives": objectives,
+        "chat": chat,
+        "teamfights": teamfights,
+    }
+
+
+def _rows(conn, sql: str, params: list[Any]) -> list[dict[str, Any]]:
+    cursor = conn.execute(sql, params)
+    cols = [d[0] for d in cursor.description]
+    return [dict(zip(cols, r)) for r in cursor.fetchall()]

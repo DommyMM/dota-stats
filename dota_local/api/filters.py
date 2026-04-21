@@ -107,6 +107,14 @@ def compile_matches(f: MatchFilter) -> tuple[str, list[Any]]:
     return sql, params
 
 
+def compile_where(f: MatchFilter) -> tuple[str, list[Any]]:
+    """Public entry for the WHERE clause + bound params against
+    `match_players mp JOIN matches m USING (match_id)`. Used by the
+    /api/stats/* aggregates so the panels stay in lockstep with the
+    table filter state."""
+    return _compile_where(f)
+
+
 def compile_summary(f: MatchFilter) -> tuple[str, list[Any]]:
     """Counts + rate aggregates against the filter set. Shares the WHERE
     clause with compile_matches so the two stay in lockstep."""

@@ -14,4 +14,4 @@ def serve(
     """Run the FastAPI query server on localhost."""
     import uvicorn
 
-    uvicorn.run("dota_local.api.main:app", host=host, port=port, reload=reload)
+    uvicorn.run("dota_local.api.app:app", host=host, port=port, reload=reload)

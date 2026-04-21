@@ -57,6 +57,14 @@ def enrich(
     )
 
 
+@app.command("metadata")
+def metadata() -> None:
+    """Refresh heroes / items / abilities from OpenDota /constants/*."""
+    from dota_local.ingest.metadata import load_metadata
+
+    asyncio.run(load_metadata())
+
+
 @app.command("refresh")
 def refresh() -> None:
     """Pull new matches since last run for each tracked account. (M6)"""

@@ -1,0 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-bg text-text font-sans antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  * {
+    @apply border-border;
+  }
+}
+
+@layer utilities {
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .label-sm {
+    @apply text-[10px] font-bold tracking-[.12em] uppercase text-ghost2;
+  }
+  .skeleton {
+    background: linear-gradient(90deg, #0d1420 0%, #111822 50%, #0d1420 100%);
+    background-size: 800px 100%;
+    @apply animate-shimmer rounded;
+  }
+}

@@ -1,11 +1,10 @@
 import { Swords } from 'lucide-react'
 import clsx from 'clsx'
 import { useHealth } from '../../api/hooks'
-import { useFilters } from '../../state/filters'
+import { AccountSwitcher } from './AccountSwitcher'
 
 export function Header() {
   const { data: health, isError } = useHealth()
-  const accountId = useFilters((s) => s.filter.account_id)
 
   return (
     <header className="sticky top-0 z-30 h-12 border-b border-border bg-surface/95 backdrop-blur">
@@ -44,10 +43,7 @@ export function Header() {
           >
             ↻ Pull new
           </button>
-          <div className="flex items-center gap-2 rounded-md border border-border2 bg-surface2 px-3 py-1.5 text-xs">
-            <span className="text-gold">★</span>
-            <span className="font-mono text-text tnum">{accountId}</span>
-          </div>
+          <AccountSwitcher />
         </div>
       </div>
     </header>

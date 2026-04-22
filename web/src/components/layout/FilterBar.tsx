@@ -1,18 +1,58 @@
-import { Plus } from 'lucide-react'
+import { useFilters } from '../../state/filters'
+import { ResultChip } from '../filters/ResultChip'
+import { GameModePopover } from '../filters/GameModePopover'
+import { HeroPicker } from '../filters/HeroPicker'
+import { AccountPicker } from '../filters/AccountPicker'
+import { DateRangePopover } from '../filters/DateRangePopover'
+
+function anyFilterActive(f: ReturnType<typeof useFilters.getState>['filter']): boolean {
+  return (
+    f.result !== undefined ||
+    f.hero_ids.length > 0 ||
+    f.with_accounts.length > 0 ||
+    f.against_accounts.length > 0 ||
+    f.with_hero_ids.length > 0 ||
+    f.against_hero_ids.length > 0 ||
+    f.game_modes.length > 0 ||
+    f.lobby_types.length > 0 ||
+    f.patches.length > 0 ||
+    f.party_sizes.length > 0 ||
+    f.positions.length > 0 ||
+    f.facet_ids.length > 0 ||
+    f.date_from !== undefined ||
+    f.date_to !== undefined ||
+    f.duration_min_s !== undefined ||
+    f.duration_max_s !== undefined ||
+    f.rank_tier_min !== undefined ||
+    f.rank_tier_max !== undefined ||
+    f.parsed_only ||
+    f.leaver_only
+  )
+}
 
 export function FilterBar() {
+  const filter = useFilters((s) => s.filter)
+  const reset = useFilters((s) => s.reset)
+  const hasAny = anyFilterActive(filter)
+
   return (
     <div className="sticky top-12 z-20 h-11 border-b border-border bg-surface/95 backdrop-blur">
       <div className="mx-auto flex h-full max-w-shell items-center gap-2 px-6">
-        <span className="label-sm">Filters</span>
-        <span className="text-xs text-ghost">No filters applied — F1 wires up chip popovers.</span>
-        <button
-          type="button"
-          className="ml-auto inline-flex items-center gap-1 rounded-md border border-dashed border-border2 px-2.5 py-1 text-xs text-muted hover:border-link hover:text-link"
-          disabled
-        >
-          <Plus size={12} /> Add filter
-        </button>
+        <ResultChip />
+        <GameModePopover />
+        <HeroPicker field="hero_ids" />
+        <AccountPicker field="with_accounts" />
+        <AccountPicker field="against_accounts" />
+        <DateRangePopover />
+        {hasAny && (
+          <button
+            type="button"
+            onClick={reset}
+            className="ml-auto text-xs text-ghost hover:text-dire"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
     </div>
   )

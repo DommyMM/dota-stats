@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from dota_local import __version__
-from dota_local.api.routers import matches, meta, stats
+from dota_local.api.routers import ingest, matches, meta, stats
 from dota_local.db import connection
 
 app = FastAPI(title="dota-local", version=__version__)
@@ -19,6 +19,7 @@ app.add_middleware(
 app.include_router(matches.router)
 app.include_router(meta.router)
 app.include_router(stats.router)
+app.include_router(ingest.router)
 
 
 @app.get("/health")

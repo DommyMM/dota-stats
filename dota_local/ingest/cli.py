@@ -66,6 +66,19 @@ def metadata() -> None:
 
 
 @app.command("refresh")
-def refresh() -> None:
-    """Pull new matches since last run for each tracked account. (M6)"""
-    raise NotImplementedError("refresh lands in M6")
+def refresh(
+    account_id: Annotated[
+        list[int] | None,
+        typer.Option("--account-id", help="Tracked account_id; repeat flag. Defaults to .env."),
+    ] = None,
+) -> None:
+    """Pull new matches since last run for each tracked account."""
+    from dota_local.ingest.refresh import refresh as _refresh
+
+    summary = asyncio.run(_refresh(account_ids=account_id))
+    for row in summary["accounts"]:
+        console.print(
+            f"[cyan]{row['account_id']}[/cyan] +{row['new_matches']} new "
+            f"(max existing was {row['max_existing']})"
+        )
+    console.print(f"[green]total new matches: {summary['total_new']}[/green]")

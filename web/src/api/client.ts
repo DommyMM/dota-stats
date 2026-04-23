@@ -14,6 +14,20 @@ export async function apiGet<T>(path: string, params?: URLSearchParams): Promise
   const url = new URL(path, BASE_URL)
   if (params) url.search = params.toString()
   const res = await fetch(url, { headers: { accept: 'application/json' } })
+  return parseResponse<T>(res)
+}
+
+export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  const url = new URL(path, BASE_URL)
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { accept: 'application/json', 'content-type': 'application/json' },
+    body: body == null ? undefined : JSON.stringify(body),
+  })
+  return parseResponse<T>(res)
+}
+
+async function parseResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let detail = res.statusText
     try {

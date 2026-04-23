@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { apiGet, filterToParams } from './client'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { apiGet, apiPost, filterToParams } from './client'
 import type {
   Ability,
   Account,
@@ -108,6 +108,27 @@ export function useAbilities() {
     queryKey: ['meta-abilities'],
     queryFn: () => apiGet<Ability[]>('/api/meta/abilities'),
     staleTime: Infinity,
+  })
+}
+
+export type RefreshResult = {
+  accounts: Array<{ account_id: number; new_matches: number; max_existing: number | null }>
+  total_new: number
+}
+
+export function useRefreshMatches() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiPost<RefreshResult>('/api/ingest/refresh'),
+    onSuccess: (result) => {
+      if (result.total_new > 0) {
+        // Everything downstream depends on the match set — nuke the cache.
+        qc.invalidateQueries()
+      } else {
+        // Still refresh health so the counts reflect any upstream reindex.
+        qc.invalidateQueries({ queryKey: ['health'] })
+      }
+    },
   })
 }
 

@@ -167,6 +167,8 @@ export type Hero = {
 
 export type Item = { item_id: number; name: string; cost: number | null }
 
+export type Ability = { ability_id: number; name: string; is_ultimate: boolean }
+
 export type Account = { account_id: number; match_count: number; tracked: boolean }
 
 export type Health = {

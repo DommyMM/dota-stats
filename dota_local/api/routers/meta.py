@@ -42,6 +42,18 @@ def items() -> list[dict[str, Any]]:
     return [{"item_id": r[0], "name": r[1], "cost": r[2]} for r in rows]
 
 
+@router.get("/abilities")
+def abilities() -> list[dict[str, Any]]:
+    with connection(read_only=True) as conn:
+        rows = conn.execute(
+            "SELECT ability_id, name, is_ultimate FROM abilities ORDER BY name"
+        ).fetchall()
+    return [
+        {"ability_id": r[0], "name": r[1], "is_ultimate": bool(r[2])}
+        for r in rows
+    ]
+
+
 @router.get("/accounts")
 def accounts(min_matches: int = 1, tracked: int | None = None) -> list[dict[str, Any]]:
     """Accounts seen in match_players, ordered by how often they show up

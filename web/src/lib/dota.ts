@@ -32,3 +32,17 @@ export function itemIconUrl(itemName: string | undefined): string | null {
   const slug = itemName.replace(/^item_/, '')
   return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/items/${slug}.png`
 }
+
+export function abilityIconUrl(abilityName: string | undefined): string | null {
+  if (!abilityName) return null
+  return `https://cdn.cloudflare.steamstatic.com/apps/dota2/images/dota_react/abilities/${abilityName}.png`
+}
+
+export function fmtGameTime(seconds: number | null | undefined): string {
+  if (seconds == null) return '—'
+  const sign = seconds < 0 ? '-' : ''
+  const s = Math.abs(Math.round(seconds))
+  const m = Math.floor(s / 60)
+  const r = s % 60
+  return `${sign}${m}:${r.toString().padStart(2, '0')}`
+}

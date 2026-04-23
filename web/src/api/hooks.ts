@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiGet, filterToParams } from './client'
 import type {
+  Ability,
   Account,
   ActivityDay,
   Health,
@@ -98,6 +99,14 @@ export function useItems() {
   return useQuery({
     queryKey: ['meta-items'],
     queryFn: () => apiGet<Item[]>('/api/meta/items'),
+    staleTime: Infinity,
+  })
+}
+
+export function useAbilities() {
+  return useQuery({
+    queryKey: ['meta-abilities'],
+    queryFn: () => apiGet<Ability[]>('/api/meta/abilities'),
     staleTime: Infinity,
   })
 }

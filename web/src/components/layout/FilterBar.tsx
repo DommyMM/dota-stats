@@ -4,6 +4,12 @@ import { GameModePopover } from '../filters/GameModePopover'
 import { HeroPicker } from '../filters/HeroPicker'
 import { AccountPicker } from '../filters/AccountPicker'
 import { DateRangePopover } from '../filters/DateRangePopover'
+import { DurationChip } from '../filters/DurationChip'
+import { PartySizeChip } from '../filters/PartySizeChip'
+import { PositionChip } from '../filters/PositionChip'
+import { RankRangeChip } from '../filters/RankRangeChip'
+import { ParsedOnlyChip, LeaverOnlyChip } from '../filters/ToggleChips'
+import { AddFilterMenu } from '../filters/AddFilterMenu'
 
 function anyFilterActive(f: ReturnType<typeof useFilters.getState>['filter']): boolean {
   return (
@@ -36,14 +42,25 @@ export function FilterBar() {
   const hasAny = anyFilterActive(filter)
 
   return (
-    <div className="sticky top-12 z-20 h-11 border-b border-border bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex h-full max-w-shell items-center gap-2 px-6">
+    <div className="sticky top-12 z-20 border-b border-border bg-surface/95 backdrop-blur">
+      <div className="mx-auto flex max-w-shell flex-wrap items-center gap-2 px-6 py-2">
         <ResultChip />
         <GameModePopover />
         <HeroPicker field="hero_ids" />
         <AccountPicker field="with_accounts" />
         <AccountPicker field="against_accounts" />
         <DateRangePopover />
+
+        {/* Secondary chips render when active (set via Add filter menu). */}
+        <DurationChip />
+        <PartySizeChip />
+        <PositionChip />
+        <RankRangeChip />
+        <ParsedOnlyChip />
+        <LeaverOnlyChip />
+
+        <AddFilterMenu />
+
         {hasAny && (
           <button
             type="button"

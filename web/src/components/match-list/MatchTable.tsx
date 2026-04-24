@@ -95,7 +95,7 @@ export function MatchTable() {
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className={clsx('px-3 align-middle', cellPad)}>
+                    <td key={cell.id} className={clsx('px-3 align-middle whitespace-nowrap', cellPad)}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}

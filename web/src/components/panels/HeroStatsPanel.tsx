@@ -4,7 +4,7 @@ import { useHeroes, useHeroStats } from '../../api/hooks'
 import { useFilters } from '../../state/filters'
 import { HeroIcon } from '../assets/HeroIcon'
 import { fmtWR } from '../../lib/formatters'
-import { heroByIdMap } from '../../lib/dota'
+import { heroByIdMap, heroIconUrl } from '../../lib/dota'
 import type { Hero, HeroStat } from '../../api/types'
 
 const ATTR_COLOR: Record<string, string> = {
@@ -23,10 +23,7 @@ export function HeroStatsPanel() {
   const top = stats.slice(0, 6)
   const rest = stats.slice(6, 15)
 
-  const option = useMemo(
-    () => buildDonutOption(top, heroMap),
-    [top, heroMap],
-  )
+  const option = useMemo(() => buildDonutOption(top, heroMap), [top, heroMap])
 
   return (
     <section className="rounded-lg border border-border bg-surface p-4">
@@ -37,7 +34,7 @@ export function HeroStatsPanel() {
         </span>
       </div>
 
-      {isLoading && <div className="h-48 skeleton" />}
+      {isLoading && <div className="h-52 skeleton" />}
 
       {!isLoading && top.length === 0 && (
         <div className="py-6 text-center text-xs text-ghost">No data.</div>
@@ -45,7 +42,7 @@ export function HeroStatsPanel() {
 
       {!isLoading && top.length > 0 && (
         <>
-          <div className="h-40">
+          <div className="h-52">
             <ReactECharts
               option={option}
               style={{ height: '100%', width: '100%' }}
@@ -85,6 +82,20 @@ export function HeroStatsPanel() {
 }
 
 function buildDonutOption(top: HeroStat[], heroMap: Map<number, Hero>) {
+  // One rich-text key per hero — ECharts evaluates these lazily and
+  // per-slice, which is the only way to get distinct images per pie wedge.
+  const rich: Record<string, object> = {}
+  for (const s of top) {
+    const hero = heroMap.get(s.hero_id)
+    const url = heroIconUrl(hero)
+    if (!url) continue
+    rich[`h${s.hero_id}`] = {
+      width: 42,
+      height: 24,
+      backgroundColor: { image: url },
+    }
+  }
+
   const data = top.map((s) => {
     const hero = heroMap.get(s.hero_id)
     const color = ATTR_COLOR[hero?.primary_attr ?? 'all'] ?? '#8a9ab8'
@@ -122,12 +133,23 @@ function buildDonutOption(top: HeroStat[], heroMap: Map<number, Hero>) {
     series: [
       {
         type: 'pie',
-        radius: ['55%', '80%'],
+        radius: ['42%', '62%'],
         center: ['50%', '50%'],
-        avoidLabelOverlap: false,
-        label: { show: false },
-        labelLine: { show: false },
-        emphasis: { scale: true, scaleSize: 6 },
+        avoidLabelOverlap: true,
+        label: {
+          show: true,
+          position: 'outside',
+          formatter: (p: { data: { hero_id: number } }) =>
+            rich[`h${p.data.hero_id}`] ? `{h${p.data.hero_id}|}` : '',
+          rich,
+        },
+        labelLine: {
+          show: true,
+          length: 4,
+          length2: 4,
+          lineStyle: { color: '#1a2232' },
+        },
+        emphasis: { scale: true, scaleSize: 4 },
         data,
       },
     ],

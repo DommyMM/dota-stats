@@ -14,6 +14,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Query
 
 from dota_local.api.filters import (
+    AnalysisOutcome,
     MatchFilter,
     ResultFilter,
     compile_where,
@@ -43,6 +44,7 @@ def _filter(
     rank_tier_min: int | None,
     rank_tier_max: int | None,
     result: ResultFilter | None,
+    analysis_outcome: list[AnalysisOutcome],
     parsed_only: bool,
     leaver_only: bool,
 ) -> MatchFilter:
@@ -68,6 +70,7 @@ def _filter(
         rank_tier_min=rank_tier_min,
         rank_tier_max=rank_tier_max,
         result=result,
+        analysis_outcomes=analysis_outcome,
         parsed_only=parsed_only,
         leaver_only=leaver_only,
     )
@@ -94,6 +97,7 @@ def hero_stats(
     rank_tier_min: int | None = None,
     rank_tier_max: int | None = None,
     result: ResultFilter | None = None,
+    analysis_outcome: Annotated[list[AnalysisOutcome], Query()] = [],
     parsed_only: bool = False,
     leaver_only: bool = False,
     limit: int = 50,
@@ -109,7 +113,8 @@ def hero_stats(
         date_from=date_from, date_to=date_to,
         duration_min_s=duration_min_s, duration_max_s=duration_max_s,
         rank_tier_min=rank_tier_min, rank_tier_max=rank_tier_max,
-        result=result, parsed_only=parsed_only, leaver_only=leaver_only,
+        result=result, analysis_outcome=analysis_outcome,
+        parsed_only=parsed_only, leaver_only=leaver_only,
     )
     where, params = compile_where(f_obj)
     sql = (
@@ -157,6 +162,7 @@ def teammate_stats(
     rank_tier_min: int | None = None,
     rank_tier_max: int | None = None,
     result: ResultFilter | None = None,
+    analysis_outcome: Annotated[list[AnalysisOutcome], Query()] = [],
     parsed_only: bool = False,
     leaver_only: bool = False,
     limit: int = 30,
@@ -174,7 +180,8 @@ def teammate_stats(
         date_from=date_from, date_to=date_to,
         duration_min_s=duration_min_s, duration_max_s=duration_max_s,
         rank_tier_min=rank_tier_min, rank_tier_max=rank_tier_max,
-        result=result, parsed_only=parsed_only, leaver_only=leaver_only,
+        result=result, analysis_outcome=analysis_outcome,
+        parsed_only=parsed_only, leaver_only=leaver_only,
     )
     where, params = compile_where(f_obj)
     # Join matches where `me` (mp) is present, then pick up every other
@@ -232,6 +239,7 @@ def activity(
     rank_tier_min: int | None = None,
     rank_tier_max: int | None = None,
     result: ResultFilter | None = None,
+    analysis_outcome: Annotated[list[AnalysisOutcome], Query()] = [],
     parsed_only: bool = False,
     leaver_only: bool = False,
     days: int = 180,
@@ -247,7 +255,8 @@ def activity(
         date_from=date_from, date_to=date_to,
         duration_min_s=duration_min_s, duration_max_s=duration_max_s,
         rank_tier_min=rank_tier_min, rank_tier_max=rank_tier_max,
-        result=result, parsed_only=parsed_only, leaver_only=leaver_only,
+        result=result, analysis_outcome=analysis_outcome,
+        parsed_only=parsed_only, leaver_only=leaver_only,
     )
     where, params = compile_where(f_obj)
     sql = (

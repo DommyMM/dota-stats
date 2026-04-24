@@ -15,6 +15,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 ResultFilter = Literal["win", "loss"]
+AnalysisOutcome = Literal["none", "stomped", "comeback", "close_game"]
 OrderBy = Literal[
     "start_time", "duration", "kills", "deaths", "assists",
     "gpm", "xpm", "net_worth", "imp",
@@ -59,6 +60,9 @@ class MatchFilter(BaseModel):
 
     # Outcome.
     result: ResultFilter | None = None
+    # Stratz's match-level tag: stomped / comeback / close_game / none. A
+    # list lets us filter e.g. both "comeback" and "close_game" at once.
+    analysis_outcomes: list[AnalysisOutcome] = Field(default_factory=list)
 
     # Paging / ordering.
     limit: int = Field(default=100, ge=1, le=1000)
@@ -82,6 +86,7 @@ _ORDER_MAP: dict[str, str] = {
 _SELECT = """
     m.match_id, m.start_time, m.duration, m.game_mode, m.lobby_type,
     m.patch, m.radiant_win, m.avg_rank_tier, m.parse_status, m.region,
+    m.analysis_outcome, m.top_lane_outcome, m.mid_lane_outcome, m.bot_lane_outcome,
     mp.player_slot, mp.account_id, mp.hero_id, mp.is_radiant,
     mp.kills, mp.deaths, mp.assists,
     mp.gpm, mp.xpm, mp.last_hits, mp.denies,
@@ -180,6 +185,11 @@ def _compile_where(f: MatchFilter) -> tuple[str, list[Any]]:
         clauses.append("mp.leaver_status > 0")
     if f.parsed_only:
         clauses.append("m.parse_status = 'parsed'")
+
+    if f.analysis_outcomes:
+        placeholders = ",".join(["?"] * len(f.analysis_outcomes))
+        clauses.append(f"m.analysis_outcome IN ({placeholders})")
+        params.extend(f.analysis_outcomes)
 
     if f.with_accounts:
         placeholders = ",".join(["?"] * len(f.with_accounts))

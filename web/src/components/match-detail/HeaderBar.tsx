@@ -3,6 +3,7 @@ import { Copy, ExternalLink } from 'lucide-react'
 import type { MatchDetail } from '../../api/types'
 import { fmtDate, fmtDuration } from '../../lib/formatters'
 import { GAME_MODE_NAMES, LOBBY_TYPE_NAMES, rankTierLabel } from '../../lib/constants'
+import { OutcomeBadge } from '../ui/OutcomeBadge'
 
 export function HeaderBar({ data }: { data: MatchDetail }) {
   const m = data.match
@@ -60,15 +61,18 @@ export function HeaderBar({ data }: { data: MatchDetail }) {
           {m.match_id}
           <Copy size={10} />
         </button>
-        <span
-          className={clsx(
-            'ml-auto inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wide',
-            m.parse_status === 'parsed'
-              ? 'border-radiant/30 text-radiant'
-              : 'border-ghost2 text-ghost',
-          )}
-        >
-          Parse: {m.parse_status}
+        <span className="ml-auto inline-flex items-center gap-1.5">
+          <OutcomeBadge outcome={m.analysis_outcome} size="md" muteNormal={false} />
+          <span
+            className={clsx(
+              'inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] uppercase tracking-wide',
+              m.parse_status === 'parsed'
+                ? 'border-radiant/30 text-radiant'
+                : 'border-ghost2 text-ghost',
+            )}
+          >
+            Parse: {m.parse_status}
+          </span>
         </span>
         {m.replay_url && (
           <a

@@ -5,6 +5,12 @@ export type ParseStatus =
   | 'unparseable'
   | 'unavailable'
 
+export type AnalysisOutcome = 'none' | 'stomped' | 'comeback' | 'close_game'
+
+// Stratz's per-lane enum: prefix tells winner, suffix tells margin. Raw
+// text so we don't have to chase every enum member if Stratz adds more.
+export type LaneOutcome = string
+
 export type Match = {
   match_id: number
   start_time: string
@@ -16,6 +22,10 @@ export type Match = {
   avg_rank_tier: number | null
   parse_status: ParseStatus
   region: number | null
+  analysis_outcome: AnalysisOutcome | null
+  top_lane_outcome: LaneOutcome | null
+  mid_lane_outcome: LaneOutcome | null
+  bot_lane_outcome: LaneOutcome | null
   player_slot: number
   account_id: number
   hero_id: number
@@ -115,6 +125,10 @@ export type MatchDetail = {
     parse_status: ParseStatus
     source: string | null
     replay_url: string | null
+    analysis_outcome: AnalysisOutcome | null
+    top_lane_outcome: LaneOutcome | null
+    mid_lane_outcome: LaneOutcome | null
+    bot_lane_outcome: LaneOutcome | null
   }
   players: MatchDetailPlayer[]
   draft: Array<{
@@ -212,6 +226,7 @@ export type MatchFilterState = {
   rank_tier_min?: number
   rank_tier_max?: number
   result?: ResultFilter
+  analysis_outcomes: AnalysisOutcome[]
   parsed_only: boolean
   leaver_only: boolean
   limit: number

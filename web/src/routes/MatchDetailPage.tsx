@@ -4,6 +4,7 @@ import { useMatchDetail } from '../api/hooks'
 import { HeaderBar } from '../components/match-detail/HeaderBar'
 import { ScoreboardGrid } from '../components/match-detail/ScoreboardGrid'
 import { DraftStrip } from '../components/match-detail/DraftStrip'
+import { LaneOutcomes } from '../components/match-detail/LaneOutcomes'
 import { BuildsSection } from '../components/match-detail/BuildsSection'
 import { ObjectivesTimeline } from '../components/match-detail/ObjectivesTimeline'
 import { KillFeed } from '../components/match-detail/KillFeed'
@@ -50,6 +51,7 @@ export function MatchDetailPage() {
           )}
 
           <ScoreboardGrid data={data} />
+          <LaneOutcomes data={data} />
 
           <div className="rounded-lg border border-border bg-surface p-4 text-xs text-ghost">
             Net-worth / XP chart requires a per-minute series (replay-parser output, M9). Showing

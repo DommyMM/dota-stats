@@ -2,6 +2,7 @@ import clsx from 'clsx'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { Match, OrderBy } from '../../api/types'
 import { HeroIcon } from '../assets/HeroIcon'
+import { OutcomeBadge } from '../ui/OutcomeBadge'
 import { fmtDuration, fmtInt, fmtKNum, fmtRelTime } from '../../lib/formatters'
 import { heroByIdMap, impColor } from '../../lib/dota'
 import {
@@ -29,8 +30,9 @@ export function buildColumns(heroes: Hero[]): ColumnDef<Match>[] {
               <span className="truncate text-sm text-text">
                 {hero?.localized_name ?? `Hero ${row.original.hero_id}`}
               </span>
-              <span className="text-[10px] uppercase tracking-wide text-ghost">
-                {row.original.is_radiant ? 'Radiant' : 'Dire'}
+              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-ghost">
+                <span>{row.original.is_radiant ? 'Radiant' : 'Dire'}</span>
+                <OutcomeBadge outcome={row.original.analysis_outcome} size="sm" />
               </span>
             </div>
           </div>

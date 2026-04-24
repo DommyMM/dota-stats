@@ -24,6 +24,7 @@ function emptyFilter(account_id: number): MatchFilterState {
     party_sizes: [],
     positions: [],
     facet_ids: [],
+    analysis_outcomes: [],
     parsed_only: false,
     leaver_only: false,
     limit: 100,

@@ -1,5 +1,6 @@
 import { useFilters } from '../../state/filters'
 import { ResultChip } from '../filters/ResultChip'
+import { OutcomeChip } from '../filters/OutcomeChip'
 import { GameModePopover } from '../filters/GameModePopover'
 import { HeroPicker } from '../filters/HeroPicker'
 import { AccountPicker } from '../filters/AccountPicker'
@@ -32,7 +33,8 @@ function anyFilterActive(f: ReturnType<typeof useFilters.getState>['filter']): b
     f.rank_tier_min !== undefined ||
     f.rank_tier_max !== undefined ||
     f.parsed_only ||
-    f.leaver_only
+    f.leaver_only ||
+    f.analysis_outcomes.length > 0
   )
 }
 
@@ -45,6 +47,7 @@ export function FilterBar() {
     <div className="sticky top-12 z-20 border-b border-border bg-surface/95 backdrop-blur">
       <div className="mx-auto flex max-w-shell flex-wrap items-center gap-2 px-6 py-2">
         <ResultChip />
+        <OutcomeChip />
         <GameModePopover />
         <HeroPicker field="hero_ids" />
         <AccountPicker field="with_accounts" />

@@ -6,6 +6,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, HTTPException, Query
 
 from dota_local.api.filters import (
+    AnalysisOutcome,
     MatchFilter,
     OrderBy,
     OrderDir,
@@ -38,6 +39,7 @@ def _filter_from_query(
     rank_tier_min: int | None,
     rank_tier_max: int | None,
     result: ResultFilter | None,
+    analysis_outcome: list[AnalysisOutcome],
     parsed_only: bool,
     leaver_only: bool,
     limit: int,
@@ -65,6 +67,7 @@ def _filter_from_query(
         rank_tier_min=rank_tier_min,
         rank_tier_max=rank_tier_max,
         result=result,
+        analysis_outcomes=analysis_outcome,
         parsed_only=parsed_only,
         leaver_only=leaver_only,
         limit=limit,
@@ -110,6 +113,7 @@ def list_matches(
     rank_tier_min: int | None = None,
     rank_tier_max: int | None = None,
     result: ResultFilter | None = None,
+    analysis_outcome: Annotated[list[AnalysisOutcome], Query()] = [],
     parsed_only: bool = False,
     leaver_only: bool = False,
     limit: int = 100,
@@ -147,6 +151,7 @@ def match_summary(
     rank_tier_min: int | None = None,
     rank_tier_max: int | None = None,
     result: ResultFilter | None = None,
+    analysis_outcome: Annotated[list[AnalysisOutcome], Query()] = [],
     parsed_only: bool = False,
     leaver_only: bool = False,
 ) -> dict[str, Any]:
@@ -160,7 +165,8 @@ def match_summary(
         date_from=date_from, date_to=date_to,
         duration_min_s=duration_min_s, duration_max_s=duration_max_s,
         rank_tier_min=rank_tier_min, rank_tier_max=rank_tier_max,
-        result=result, parsed_only=parsed_only, leaver_only=leaver_only,
+        result=result, analysis_outcome=analysis_outcome,
+        parsed_only=parsed_only, leaver_only=leaver_only,
         limit=1, offset=0, order_by="start_time", order_dir="desc",
     )
     sql, params = compile_summary(f)
@@ -185,7 +191,8 @@ def match_detail(match_id: int) -> dict[str, Any]:
     with connection(read_only=True) as conn:
         match_row = conn.execute(
             "SELECT match_id, start_time, duration, game_mode, lobby_type, patch, "
-            "region, radiant_win, avg_rank_tier, parse_status, source, replay_url "
+            "region, radiant_win, avg_rank_tier, parse_status, source, replay_url, "
+            "analysis_outcome, top_lane_outcome, mid_lane_outcome, bot_lane_outcome "
             "FROM matches WHERE match_id = ?",
             [match_id],
         ).fetchone()
@@ -194,6 +201,7 @@ def match_detail(match_id: int) -> dict[str, Any]:
         match_cols = [
             "match_id", "start_time", "duration", "game_mode", "lobby_type", "patch",
             "region", "radiant_win", "avg_rank_tier", "parse_status", "source", "replay_url",
+            "analysis_outcome", "top_lane_outcome", "mid_lane_outcome", "bot_lane_outcome",
         ]
         match = dict(zip(match_cols, match_row))
 

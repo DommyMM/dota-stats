@@ -53,6 +53,7 @@ const LIST_FIELDS = [
   'party_sizes',
   'positions',
   'facet_ids',
+  'analysis_outcomes',
 ] as const satisfies readonly (keyof MatchFilterState)[]
 
 const LIST_FIELD_TO_PARAM: Record<(typeof LIST_FIELDS)[number], string> = {
@@ -67,6 +68,7 @@ const LIST_FIELD_TO_PARAM: Record<(typeof LIST_FIELDS)[number], string> = {
   party_sizes: 'party_size',
   positions: 'position',
   facet_ids: 'facet_id',
+  analysis_outcomes: 'analysis_outcome',
 }
 
 type FilterQueryOptions = {
@@ -82,7 +84,7 @@ export function filterToParams(
   params.set('account_id', String(filter.account_id))
 
   for (const field of LIST_FIELDS) {
-    const values = filter[field] as number[]
+    const values = filter[field] as Array<number | string>
     const name = LIST_FIELD_TO_PARAM[field]
     for (const v of values) params.append(name, String(v))
   }

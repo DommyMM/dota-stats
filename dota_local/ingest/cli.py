@@ -65,6 +65,23 @@ def metadata() -> None:
     asyncio.run(load_metadata())
 
 
+@app.command("stratz")
+def stratz(
+    limit: Annotated[int | None, typer.Option(help="Max matches to tag this run.")] = None,
+    refetch: Annotated[
+        bool,
+        typer.Option(
+            "--refetch",
+            help="Re-tag matches already fetched (for schema backfills).",
+        ),
+    ] = False,
+) -> None:
+    """Tag matches with Stratz analysisOutcome + lane outcomes."""
+    from dota_local.ingest.stratz_outcome import backfill_outcomes
+
+    asyncio.run(backfill_outcomes(limit=limit, refetch=refetch))
+
+
 @app.command("refresh")
 def refresh(
     account_id: Annotated[

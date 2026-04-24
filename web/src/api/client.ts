@@ -1,4 +1,4 @@
-import type { MatchFilterState } from './types'
+import type { AnalysisOutcome, MatchFilterState, OrderBy, OrderDir, ResultFilter } from './types'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 
@@ -113,4 +113,132 @@ export function filterToParams(
   }
 
   return params
+}
+
+const PARAM_TO_LIST_FIELD: Record<string, (typeof LIST_FIELDS)[number]> = Object
+  .fromEntries(
+    (Object.entries(LIST_FIELD_TO_PARAM) as Array<[(typeof LIST_FIELDS)[number], string]>)
+      .map(([field, param]) => [param, field]),
+  )
+
+const STRING_LIST_FIELDS: ReadonlySet<(typeof LIST_FIELDS)[number]> = new Set([
+  'analysis_outcomes',
+])
+
+const VALID_OUTCOMES: ReadonlySet<AnalysisOutcome> = new Set([
+  'none',
+  'stomped',
+  'comeback',
+  'close_game',
+])
+const VALID_ORDER_BY: ReadonlySet<OrderBy> = new Set([
+  'start_time',
+  'duration',
+  'kills',
+  'deaths',
+  'assists',
+  'gpm',
+  'xpm',
+  'net_worth',
+  'imp',
+])
+
+/**
+ * Parse a URLSearchParams (or URL query string) into a partial
+ * MatchFilterState. Unknown keys are ignored; malformed values are
+ * dropped silently so deep links from older schemas don't blow up.
+ *
+ * Returns `null` if the URL doesn't appear to describe a filter
+ * (no recognized params at all) so callers can decide whether to
+ * fall back to the persisted default.
+ */
+export function paramsToFilter(
+  search: URLSearchParams | string,
+): Partial<MatchFilterState> | null {
+  const params = typeof search === 'string' ? new URLSearchParams(search) : search
+  const out: Partial<MatchFilterState> = {}
+  let hit = false
+
+  const accountRaw = params.get('account_id')
+  if (accountRaw) {
+    const n = Number(accountRaw)
+    if (Number.isFinite(n) && n > 0) {
+      out.account_id = n
+      hit = true
+    }
+  }
+
+  // List fields — repeated params.
+  for (const [paramName, field] of Object.entries(PARAM_TO_LIST_FIELD)) {
+    const values = params.getAll(paramName)
+    if (values.length === 0) continue
+    hit = true
+    if (STRING_LIST_FIELDS.has(field)) {
+      // Currently only analysis_outcomes. Validate against enum.
+      const parsed = values.filter((v): v is AnalysisOutcome =>
+        VALID_OUTCOMES.has(v as AnalysisOutcome),
+      )
+      ;(out as Record<string, unknown>)[field] = parsed
+    } else {
+      const nums = values
+        .map((v) => Number(v))
+        .filter((n) => Number.isFinite(n))
+      ;(out as Record<string, unknown>)[field] = nums
+    }
+  }
+
+  const scalarNum = (key: keyof MatchFilterState, paramKey = key as string) => {
+    const raw = params.get(paramKey)
+    if (raw == null) return
+    const n = Number(raw)
+    if (Number.isFinite(n)) {
+      ;(out as Record<string, unknown>)[key as string] = n
+      hit = true
+    }
+  }
+  scalarNum('duration_min_s')
+  scalarNum('duration_max_s')
+  scalarNum('rank_tier_min')
+  scalarNum('rank_tier_max')
+  scalarNum('limit')
+  scalarNum('offset')
+
+  const dateFrom = params.get('date_from')
+  if (dateFrom) {
+    out.date_from = dateFrom
+    hit = true
+  }
+  const dateTo = params.get('date_to')
+  if (dateTo) {
+    out.date_to = dateTo
+    hit = true
+  }
+
+  const result = params.get('result')
+  if (result === 'win' || result === 'loss') {
+    out.result = result as ResultFilter
+    hit = true
+  }
+
+  const orderBy = params.get('order_by')
+  if (orderBy && VALID_ORDER_BY.has(orderBy as OrderBy)) {
+    out.order_by = orderBy as OrderBy
+    hit = true
+  }
+  const orderDir = params.get('order_dir')
+  if (orderDir === 'asc' || orderDir === 'desc') {
+    out.order_dir = orderDir as OrderDir
+    hit = true
+  }
+
+  if (params.get('parsed_only') === 'true') {
+    out.parsed_only = true
+    hit = true
+  }
+  if (params.get('leaver_only') === 'true') {
+    out.leaver_only = true
+    hit = true
+  }
+
+  return hit ? out : null
 }

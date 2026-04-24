@@ -89,9 +89,12 @@ function buildDonutOption(top: HeroStat[], heroMap: Map<number, Hero>) {
     const hero = heroMap.get(s.hero_id)
     const url = heroIconUrl(hero)
     if (!url) continue
+    // Sized to sit inside the ring band (68% - 38% = 30% of container
+    // radius). At 208px height that's ~30px radial thickness, so icons
+    // top out around 26 × 15 without clipping the ring.
     rich[`h${s.hero_id}`] = {
-      width: 42,
-      height: 24,
+      width: 26,
+      height: 15,
       backgroundColor: { image: url },
     }
   }
@@ -133,22 +136,17 @@ function buildDonutOption(top: HeroStat[], heroMap: Map<number, Hero>) {
     series: [
       {
         type: 'pie',
-        radius: ['42%', '62%'],
+        radius: ['38%', '68%'],
         center: ['50%', '50%'],
-        avoidLabelOverlap: true,
+        avoidLabelOverlap: false,
         label: {
           show: true,
-          position: 'outside',
+          position: 'inside',
           formatter: (p: { data: { hero_id: number } }) =>
             rich[`h${p.data.hero_id}`] ? `{h${p.data.hero_id}|}` : '',
           rich,
         },
-        labelLine: {
-          show: true,
-          length: 4,
-          length2: 4,
-          lineStyle: { color: '#1a2232' },
-        },
+        labelLine: { show: false },
         emphasis: { scale: true, scaleSize: 4 },
         data,
       },

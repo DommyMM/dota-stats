@@ -4,9 +4,13 @@ import { FilterBar } from './FilterBar'
 import { HeroStatsPanel } from '../panels/HeroStatsPanel'
 import { TeammatesPanel } from '../panels/TeammatesPanel'
 import { ActivityHeatmap } from '../panels/ActivityHeatmap'
+import { useFilterUrlSync } from '../../state/urlSync'
 
 export function AppShell() {
   const location = useLocation()
+  // Two-way ?query ↔ filter state sync. Bookmarks, deep links, and the
+  // back button all work as expected.
+  useFilterUrlSync()
   // Right rail is the stats panels — only meaningful on the matches list.
   const showRail = location.pathname === '/'
 

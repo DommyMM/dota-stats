@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import clsx from 'clsx'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import {
   flexRender,
@@ -17,7 +17,6 @@ export function MatchTable() {
   const filter = useFilters((s) => s.filter)
   const patch = useFilters((s) => s.patch)
   const density = useUI((s) => s.density)
-  const navigate = useNavigate()
 
   const { data: heroes = [] } = useHeroes()
   const { data: matches = [], isLoading, isError, error } = useMatches(filter)
@@ -84,19 +83,37 @@ export function MatchTable() {
           {!isLoading &&
             table.getRowModel().rows.map((row) => {
               const won = row.original.won
+              const href = `/match/${row.original.match_id}`
               return (
                 <tr
                   key={row.original.match_id}
-                  onClick={() => navigate(`/match/${row.original.match_id}`)}
                   className={clsx(
                     rowHeight,
-                    'cursor-pointer border-b border-border/60 border-l-2 transition-colors hover:bg-surface2/60',
+                    'border-b border-border/60 border-l-2 transition-colors hover:bg-surface2/60',
                     won ? 'border-l-radiant/70' : 'border-l-dire/70',
                   )}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className={clsx('px-3 align-middle whitespace-nowrap', cellPad)}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    // Each cell wraps its content in a <Link> that fills
+                    // the cell, so ctrl/cmd/shift/middle-click anywhere in
+                    // the row triggers the browser's standard new-tab
+                    // behavior. React Router's Link handles the plain
+                    // left-click → in-app navigation natively.
+                    <td
+                      key={cell.id}
+                      className={clsx(
+                        'p-0 align-middle whitespace-nowrap',
+                      )}
+                    >
+                      <Link
+                        to={href}
+                        className={clsx(
+                          'flex h-full w-full items-center px-3 outline-none',
+                          cellPad,
+                        )}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </Link>
                     </td>
                   ))}
                 </tr>
